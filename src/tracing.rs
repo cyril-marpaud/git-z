@@ -1,5 +1,5 @@
 // git-z - A Git extension to go beyond.
-// Copyright (C) 2023-2024 Jean-Philippe Cugnet <jean-philippe@cugnet.eu>
+// Copyright (C) 2024 Jean-Philippe Cugnet <jean-philippe@cugnet.eu>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,13 +13,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-//! A Git extension to go beyond.
+//! Utilities to help with tracing.
 
-mod command;
-mod commit_cache;
-mod config;
-mod helpers;
-mod tracing;
+use crate::helpers::uncapitalise;
 
-#[doc(hidden)]
-pub use command::GitZ;
+/// An extension trait for [`Result`] to insert logging.
+pub trait LogResult {
+    /// Logs the error if any.
+    fn log_err(self) -> Self;
+}
+
+impl<T, E> LogResult for Result<T, E>
+where
+    E: std::fmt::Display + std::fmt::Debug,
+{
+    fn log_err(self) -> Self {
+        if let Err(error) = &self {
+            tracing::error!(?error, "{}", uncapitalise(&error.to_string()));
+        }
+
+        self
+    }
+}
